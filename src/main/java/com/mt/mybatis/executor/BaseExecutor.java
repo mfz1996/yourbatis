@@ -5,6 +5,7 @@ import com.mt.mybatis.mapper.MyMappedStatement;
 import com.mt.mybatis.resulthandler.MyResultHandler;
 import com.mt.mybatis.transaction.Transaction;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -28,6 +29,11 @@ public abstract class BaseExecutor implements Executor{
     }
 
     @Override
+    public int update(MyMappedStatement ms, Object parameter) throws SQLException {
+        return doUpdate(ms,parameter);
+    }
+
+    @Override
     public void close() {
         try {
             transaction.getConnection().close();
@@ -47,5 +53,8 @@ public abstract class BaseExecutor implements Executor{
     }
 
     protected abstract <E> List<E> doQuery(MyMappedStatement ms, Object parameter,MyResultHandler resultHandler)
+            throws SQLException;
+
+    protected abstract int doUpdate(MyMappedStatement ms, Object parameter)
             throws SQLException;
 }

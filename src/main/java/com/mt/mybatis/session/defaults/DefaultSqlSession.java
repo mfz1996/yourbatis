@@ -26,15 +26,14 @@ public class DefaultSqlSession implements SqlSession {
         this.executor = executor;
     }
 
-
     @Override
-    public <T> T selectOne(MyMappedStatement statement) {
-        return null;
+    public int update(MyMappedStatement statement) throws SQLException {
+        return update(statement,null);
     }
 
     @Override
-    public <T> T selectOne(MyMappedStatement statement, Object parameter) {
-        return null;
+    public int update(MyMappedStatement statement, Object parameter) throws SQLException {
+        return executor.update(statement, parameter);
     }
 
     @Override

@@ -36,15 +36,24 @@ public class MyResultHandler<E> {
         try {
             String mapperName = ms.getMapperName();
             Class<?> type = configuration.getResultHandlerRegistry().get(mapperName);
+            if (type == null){
+                type = configuration.getReturnTypeMapping().get(mapperName);
+            }
             ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            if (rs.next()) {
-                Object resultObject = new DefaultObjectFactory().create(type);
-                for (Field field : resultObject.getClass().getDeclaredFields()) {
-                    Method method = type.getMethod("set"+upperCapital(field.getName()),field.getType());
-                    method.invoke(resultObject,parseColumnType(field,rs));
-                    // TODO 2019/12/28 将resultset返回行封装成对象操作
-                    // 2020/1/3 开始完成上个TODO
+            MyTypeHandler typeHandler = configuration.getTypeHandlerRegistry().getTypeHandler(type);
+            while (rs.next()) {
+                Object resultObject = null;
+                if (typeHandler != null){
+                    // 处理基本类型结果集
+                    resultObject = typeHandler.handle(rs, metaData.getColumnName(1));
+                }else {
+                    resultObject = new DefaultObjectFactory().create(type);
+                    for (Field field : resultObject.getClass().getDeclaredFields()) {
+                        Method method = type.getMethod("set"+upperCapital(field.getName()),field.getType());
+                        method.invoke(resultObject,parseColumnType(field,rs));
+                        // TODO 2019/12/28 将resultset返回行封装成对象操作
+                        // 2020/1/3 开始完成上个TODO
+                    }
                 }
                 list.add((E)resultObject);
             }

@@ -8,4 +8,9 @@ public class IntegerTypeHandler extends BaseTypeHandler<Integer>{
     public Integer getNullableResult(ResultSet rs, String columnName) throws SQLException {
         return rs.getInt(columnName);
     }
+
+    @Override
+    public Integer getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+        return rs.getInt(columnIndex);
+    }
 }

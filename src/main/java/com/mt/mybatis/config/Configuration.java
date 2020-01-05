@@ -33,16 +33,11 @@ public class Configuration {
     private MyTypeHandlerRegistry typeHandlerRegistry = new MyTypeHandlerRegistry();
     private MyResultHandlerRegistry resultHandlerRegistry = new MyResultHandlerRegistry();
     private Map<String,MyMappedStatement> mappedStatementMap = new HashMap<String, MyMappedStatement>();
-
-    public Map<String, Class<?>> getReturnTypeMapping() {
-        return returnTypeMapping;
-    }
-
     private Map<String,Class<?>> returnTypeMapping = new HashMap<>();
-
     public Map<String, MyMappedStatement> getMappedStatementMap() {
         return mappedStatementMap;
     }
+
 
     public Configuration() {
         try {
@@ -90,7 +85,7 @@ public class Configuration {
                             MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql);
                             mappedStatementMap.put(mapperKey,ms);
                             Type type = method.getGenericReturnType();
-                            if (type instanceof ParameterizedType && type instanceof Collection){
+                            if (type instanceof ParameterizedType){
                                 Type[] typesto = ((ParameterizedType) type).getActualTypeArguments();
                                 resultHandlerRegistry.regist(mapperKey, (Class<?>) typesto[0]);
                             }
@@ -111,14 +106,6 @@ public class Configuration {
         }
     }
 
-    public MyDataSource getDataSource() {
-        return dataSource;
-    }
-
-    public void setDataSource(MyDataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public Executor newExecutor(Transaction tx){
         Executor simpleExecutor = new SimpleExecutor(this,tx);
         if (isCache()){
@@ -137,6 +124,14 @@ public class Configuration {
         return simpleExecutor;
     }
 
+    public MyDataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(MyDataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public MyStatementHandler newStatementHandler(MyMappedStatement ms, Object parameter){
         return new MyStatementHandler(ms, parameter,this);
     }
@@ -150,6 +145,10 @@ public class Configuration {
 
     public MyTypeHandlerRegistry getTypeHandlerRegistry() {
         return typeHandlerRegistry;
+    }
+
+    public Map<String, Class<?>> getReturnTypeMapping() {
+        return returnTypeMapping;
     }
 
 }

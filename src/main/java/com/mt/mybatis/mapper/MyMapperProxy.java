@@ -27,20 +27,31 @@ public class MyMapperProxy<T> implements InvocationHandler {
         if (mappedStatement != null) {
             try {
                 Class<?> resultClass = configuration.getReturnTypeMapping().get(mapperKey);
-                if (resultClass != null) {
-                    if (args.length == 0) {
-                        return sqlSession.selectList(mappedStatement);
-                    } else {
-                        List<Object> list =  sqlSession.selectList(mappedStatement, args);
-                        if (resultClass.isAssignableFrom(Collection.class)){
-                            return list;
-                        }
-                        return list.get(0);
-                    }
+                String sqlType = mappedStatement.getSql().trim().split(" ")[0].toUpperCase();
+                Boolean isQuery;
+                if (sqlType.equals( "SELECT")){
+                    isQuery = true;
+                }else {
+                    isQuery = false;
                 }
+                    if (args == null) {
+                        return isQuery?sqlSession.selectList(mappedStatement):sqlSession.update(mappedStatement);
+                    } else {
+                        if (isQuery) {
+                            List<Object> list = sqlSession.selectList(mappedStatement, args);
+                            if (resultClass.isAssignableFrom(Collection.class)) {
+                                return list;
+                            }
+                            return list.get(0);
+                        }else {
+                            return sqlSession.update(mappedStatement,args);
+                        }
+                    }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }else {
+            method.invoke(proxy,args);
         }
         return null;
     }

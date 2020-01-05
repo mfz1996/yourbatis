@@ -6,15 +6,16 @@ import java.sql.SQLException;
 public class PooledDatasource extends MyDataSource {
 
     private UnpooledDatasource datasource;
-    private PoolState state = new PoolState(this);
-    protected int poolMaximumActiveConnections = 10;//默认最大活动连接是10
-    protected int poolMaximumIdleConnections = 5;//默认最大空闲连接是5
-    protected int poolMaximumCheckoutTime = 20000;
+    private PoolState state;
+    protected static int poolMaximumActiveConnections = 10;//默认最大活动连接是10
+    protected static int poolMaximumIdleConnections = 5;//默认最大空闲连接是5
+    protected static int poolMaximumCheckoutTime = 20000;
     protected int poolTimeToWait = 20000;
 
     public PooledDatasource(String url, String driver, String userName, String passWord) {
         super(url, driver, userName, passWord);
         this.datasource = new UnpooledDatasource(url, driver, userName, passWord);
+        state = new PoolState(this);
     }
 
     @Override
@@ -30,13 +31,11 @@ public class PooledDatasource extends MyDataSource {
                 if (!state.idleConnections.isEmpty()){
                     // 连接池有空闲连接,取出idle第一个，放在active队尾
                     conn = state.idleConnections.remove(0);
-                    state.activeConnections.add(conn);
                 }else {
                     // 连接池没有空闲连接
                     if (state.getActiveConnectionCount()<poolMaximumActiveConnections){
                         // active没到最大数
                         conn = new PooledConnection(this,datasource.getConnection());
-                        state.activeConnections.add(conn);
                     }else {
                         // active到了最大数并且没有空闲连接
                         PooledConnection firstActiveConn = state.activeConnections.get(0);
@@ -44,8 +43,7 @@ public class PooledDatasource extends MyDataSource {
                         if (time2Wait <= 0){
                             // active队列最先进入的连接已过期
                             state.activeConnections.remove(0);
-                            PooledConnection newPolledConn = new PooledConnection(this,firstActiveConn.getRealConnection());
-                            state.activeConnections.add(newPolledConn);
+                            conn = new PooledConnection(this,firstActiveConn.getRealConnection());
                             firstActiveConn = null;
                         } else {
                             try {
@@ -63,6 +61,7 @@ public class PooledDatasource extends MyDataSource {
                 if (conn != null){
                     conn.setLastUsedTimestamp(System.currentTimeMillis());
                     conn.setInvalidTimestamp(System.currentTimeMillis()+poolMaximumCheckoutTime);
+                    state.activeConnections.add(conn);
                 }
             }
         }

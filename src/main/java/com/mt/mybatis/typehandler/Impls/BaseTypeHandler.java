@@ -25,4 +25,6 @@ public abstract class BaseTypeHandler<T> implements MyTypeHandler<T> {
 
     public abstract T getNullableResult(ResultSet rs, String columnName) throws SQLException;
 
+    public abstract T getNullableResult(ResultSet rs, int columnIndex) throws SQLException;
+
 }

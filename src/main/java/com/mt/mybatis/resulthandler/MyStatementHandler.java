@@ -28,18 +28,21 @@ public class MyStatementHandler {
         String rawSql = ms.getSql();
         Connection conn = null;
         PreparedStatement psmt = null;
-        if (parameters.length==0) {
+        if (parameters == null) {
             try {
                 return getConnection().prepareStatement(rawSql);
-            } catch (SQLException e) {
+            } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
+            }
+            try {
+                return conn.prepareStatement(rawSql);
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
         try{
             conn = getConnection();
-            if (rawSql.split("\\?").length == parameters.length+1){
+            if (rawSql.split("\\?").length != parameters.length+1){
                 throw new UnmatchParameterException("Sql unmatch with amount of parameter");
             }
             psmt = conn.prepareStatement(rawSql);
@@ -67,8 +70,7 @@ public class MyStatementHandler {
 
     private Connection getConnection() throws SQLException, ClassNotFoundException {
         MyDataSource dataSource = configuration.getDataSource();
-        Class.forName(dataSource.getDriver());
-        return DriverManager.getConnection(dataSource.getUrl(),dataSource.getUserName(),dataSource.getPassWord());
+        return dataSource.getConnection();
     }
 
 }

@@ -4,13 +4,14 @@ import com.mt.mybatis.config.Configuration;
 import com.mt.mybatis.mapper.MyMappedStatement;
 
 import java.io.Closeable;
+import java.sql.SQLException;
 import java.util.List;
 
 public interface SqlSession extends Closeable {
 
-    <T> T selectOne(MyMappedStatement statement);
+    int update(MyMappedStatement statement) throws SQLException;
 
-    <T> T selectOne(MyMappedStatement statement, Object parameter);
+    int update(MyMappedStatement statement, Object parameter) throws SQLException;
 
     <E> List<E> selectList(MyMappedStatement statement);
 

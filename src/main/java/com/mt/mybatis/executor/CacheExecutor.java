@@ -42,6 +42,12 @@ public class CacheExecutor implements Executor {
     }
 
     @Override
+    public int update(MyMappedStatement ms, Object parameter) throws SQLException {
+        this.cache.clear();
+        return wrapper.update(ms,parameter);
+    }
+
+    @Override
     public void close() {
         cache.clear();
         wrapper.close();

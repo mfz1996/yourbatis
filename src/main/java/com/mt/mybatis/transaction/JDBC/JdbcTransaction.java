@@ -37,6 +37,6 @@ public class JdbcTransaction implements Transaction {
     }
 
     public void close() throws SQLException {
-
+        this.connection.close();
     }
 }
