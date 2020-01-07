@@ -11,13 +11,16 @@ public class LruCache implements Cache {
     private Cache delegate;
     private Map<Object, Object> keyMap;
     private Object eldestKey;
+    private String id;
 
-    public LruCache(Cache delegate) {
+    public LruCache(String id,Cache delegate) {
+        this.id = id;
         this.delegate = delegate;
         initMap(1024);
     }
 
-    public LruCache() {
+    public LruCache(String id) {
+        this.id = id;
         this.delegate = new DefaultCache("LocalCache");
         initMap(1024);
     }

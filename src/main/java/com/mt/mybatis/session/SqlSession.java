@@ -4,6 +4,7 @@ import com.mt.mybatis.config.Configuration;
 import com.mt.mybatis.mapper.MyMappedStatement;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -20,4 +21,7 @@ public interface SqlSession extends Closeable {
     <T> T getMapper(Class<T> clazz);
 
     Configuration getConfiguration();
+
+    @Override
+    void close() throws IOException;
 }

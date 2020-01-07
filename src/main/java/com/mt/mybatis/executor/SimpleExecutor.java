@@ -20,7 +20,7 @@ public class SimpleExecutor extends BaseExecutor {
 
     @Override
     protected <E> List<E> doQuery(MyMappedStatement ms, Object parameter, MyResultHandler resultHandler) throws SQLException {
-        MyStatementHandler handler = ms.getConfiguration().newStatementHandler(ms,parameter);
+        MyStatementHandler handler = ms.getConfiguration().newStatementHandler(ms,parameter,this);
         PreparedStatement statement = null;
         ResultSet rs = null;
         try {
@@ -37,14 +37,13 @@ public class SimpleExecutor extends BaseExecutor {
             if (statement!=null) {
                 statement.close();
             }
-            conn.close();
         }
         return null;
     }
 
     @Override
     protected int doUpdate(MyMappedStatement ms, Object parameter) throws SQLException {
-        MyStatementHandler handler = ms.getConfiguration().newStatementHandler(ms,parameter);
+        MyStatementHandler handler = ms.getConfiguration().newStatementHandler(ms,parameter,this);
         PreparedStatement statement = null;
         ResultSet rs = null;
         try {
@@ -59,7 +58,6 @@ public class SimpleExecutor extends BaseExecutor {
             if (statement!=null) {
                 statement.close();
             }
-            conn.close();
         }
         return 0;
     }

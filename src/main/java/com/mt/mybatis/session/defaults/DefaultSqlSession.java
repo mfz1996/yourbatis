@@ -71,6 +71,6 @@ public class DefaultSqlSession implements SqlSession {
 
     @Override
     public void close() throws IOException {
-
+        executor.close();
     }
 }

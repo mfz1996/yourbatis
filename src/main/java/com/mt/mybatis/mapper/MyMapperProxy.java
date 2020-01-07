@@ -39,6 +39,7 @@ public class MyMapperProxy<T> implements InvocationHandler {
                     } else {
                         if (isQuery) {
                             List<Object> list = sqlSession.selectList(mappedStatement, args);
+                            if (list.isEmpty()) return null;
                             if (resultClass.isAssignableFrom(Collection.class)) {
                                 return list;
                             }

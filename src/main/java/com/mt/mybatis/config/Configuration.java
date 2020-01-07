@@ -27,6 +27,7 @@ import java.util.*;
 public class Configuration {
     private Properties properties = new Properties();
     private MyDataSource dataSource;
+    private Boolean firstCache;
     private Boolean secondCache;
     private String configLocation;
 
@@ -34,6 +35,7 @@ public class Configuration {
     private MyResultHandlerRegistry resultHandlerRegistry = new MyResultHandlerRegistry();
     private Map<String,MyMappedStatement> mappedStatementMap = new HashMap<String, MyMappedStatement>();
     private Map<String,Class<?>> returnTypeMapping = new HashMap<>();
+    private Map<String,Cache> secondCaches = new HashMap<>();
     public Map<String, MyMappedStatement> getMappedStatementMap() {
         return mappedStatementMap;
     }
@@ -71,18 +73,30 @@ public class Configuration {
             }else {
                 dataSource = new PooledDatasource(properties.getProperty("jdbc.url"),properties.getProperty("jdbc.driver"),properties.getProperty("jdbc.userName"),properties.getProperty("jdbc.passWord"));
             }
+            this.firstCache = properties.getProperty("firstCache","true").equals("true");
             this.secondCache = properties.getProperty("secondCache","true").equals("true");
+            String cacheType = properties.getProperty("cacheType","DEFAULT");
             String packageName = properties.getProperty("mapperScan");
             List<Class<?>> classes = ClassUtil.getClasses(packageName);
             for (Class<?> cls:classes){
                 Method[] methods = cls.getMethods();
+                String cacheName = cls.getName();
+                Cache cache = null;
+                switch (cacheType.toUpperCase()){
+                    case "DEFAULT":
+                        cache = new DefaultCache(cacheName);
+                    case "LRU":
+                        cache = new LruCache(cacheName);
+                    default:
+                        cache = new DefaultCache(cacheName);
+                }
                 for (Method method:methods){
                     String mapperKey = cls.getName()+ "." + method.getName();
                     if (mapperProperties.getProperty(mapperKey) != null){
                         String[] mapperComp = mapperProperties.getProperty(mapperKey).split("#");
                         if (mapperComp.length == 1){
                             String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
-                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql);
+                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
                             mappedStatementMap.put(mapperKey,ms);
                             Type type = method.getGenericReturnType();
                             if (type instanceof ParameterizedType){
@@ -93,7 +107,7 @@ public class Configuration {
                         }else {
                             String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
                             String resultType = mapperProperties.getProperty(mapperKey).split("#")[1];
-                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql);
+                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
                             mappedStatementMap.put(mapperKey,ms);
                             resultHandlerRegistry.regist(mapperKey,Class.forName(resultType));
                             returnTypeMapping.put(mapperKey, (Class<?>) method.getGenericReturnType());
@@ -113,13 +127,13 @@ public class Configuration {
             Cache cache = null;
             switch (cacheType.toUpperCase()){
                 case "DEFAULT":
-                    cache = new DefaultCache("LocalCacheLocalCache");
+                    cache = new DefaultCache("LocalCache");
                 case "LRU":
-                    cache = new LruCache();
+                    cache = new LruCache("LocalCache");
                 default:
-                    cache = new DefaultCache("LocalCacheLocalCache");
+                    cache = new DefaultCache("LocalCache");
             }
-            return new CacheExecutor(this,simpleExecutor,cache);
+            return new CacheExecutor(this,simpleExecutor);
         }
         return simpleExecutor;
     }
@@ -132,11 +146,11 @@ public class Configuration {
         this.dataSource = dataSource;
     }
 
-    public MyStatementHandler newStatementHandler(MyMappedStatement ms, Object parameter){
-        return new MyStatementHandler(ms, parameter,this);
+    public MyStatementHandler newStatementHandler(MyMappedStatement ms, Object parameter,Executor executor){
+        return new MyStatementHandler(ms, parameter,this,executor);
     }
     public Boolean isCache() {
-        return secondCache;
+        return firstCache;
     }
 
     public MyResultHandlerRegistry getResultHandlerRegistry() {

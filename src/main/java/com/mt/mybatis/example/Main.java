@@ -16,10 +16,10 @@ public class Main {
         SqlSession sqlSession = sqlSessionFactory.openSession();
         PersonDao personDao = sqlSession.getMapper(PersonDao.class);
         System.out.println(personDao.getAll());
-//        Person person = personDao.queryPersonById(1);
-//        System.out.println(person.toString());
-//        Person person2 = personDao.queryPersonById(1);
-//        System.out.println(person2.toString());
+        Person person = personDao.queryPersonById(1);
+        System.out.println(person == null);
+        Person person2 = personDao.queryPersonById(1);
+        System.out.println(person2.toString());
 //        Integer sex = personDao.getSexById(11);
 //        System.out.println(sex);
 //        Integer sex2 = personDao.getSexById(11);
@@ -42,9 +42,11 @@ public class Main {
 //            });
 //            t.start();
 //        }
-//        personDao.deletePersonById(1);
-        personDao.editPersonById("MMMM",1);
-        personDao.addPerson(12,"ssss",2,22);
+
+        personDao.editPersonById("MMMM", 1);
+        personDao.addPerson(22, "wewe", 2, 22);
+        personDao.deletePersonById(1);
+        sqlSession.close();
     }
 }
 

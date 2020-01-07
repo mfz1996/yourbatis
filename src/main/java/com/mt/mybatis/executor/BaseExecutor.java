@@ -1,9 +1,11 @@
 package com.mt.mybatis.executor;
 
+import com.mt.mybatis.cache.DefaultCache;
 import com.mt.mybatis.config.Configuration;
 import com.mt.mybatis.mapper.MyMappedStatement;
 import com.mt.mybatis.resulthandler.MyResultHandler;
 import com.mt.mybatis.transaction.Transaction;
+import org.apache.ibatis.cache.Cache;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -15,12 +17,14 @@ public abstract class BaseExecutor implements Executor{
     private Executor wrapper;
     private Transaction transaction;
     private boolean closed;
+    protected Cache localCache;
 
     protected BaseExecutor(Configuration configuration, Transaction tx) {
         this.configuration = configuration;
         this.transaction = tx;
         this.closed = false;
         this.wrapper = this;
+        localCache = new DefaultCache("LocalCache");
     }
 
     @Override
@@ -35,8 +39,9 @@ public abstract class BaseExecutor implements Executor{
 
     @Override
     public void close() {
+        this.localCache.clear();
         try {
-            transaction.getConnection().close();
+            transaction.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -52,7 +57,12 @@ public abstract class BaseExecutor implements Executor{
         this.wrapper = wrapper;
     }
 
-    protected abstract <E> List<E> doQuery(MyMappedStatement ms, Object parameter,MyResultHandler resultHandler)
+    @Override
+    public Connection getConnection() throws SQLException {
+        return transaction.getConnection();
+    }
+
+    protected abstract <E> List<E> doQuery(MyMappedStatement ms, Object parameter, MyResultHandler resultHandler)
             throws SQLException;
 
     protected abstract int doUpdate(MyMappedStatement ms, Object parameter)

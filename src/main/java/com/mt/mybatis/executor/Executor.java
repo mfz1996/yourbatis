@@ -19,4 +19,6 @@ public interface Executor {
     boolean isClosed();
 
     void setExecutorWrapper(Executor wrapper);
+
+    Connection getConnection() throws SQLException;
 }

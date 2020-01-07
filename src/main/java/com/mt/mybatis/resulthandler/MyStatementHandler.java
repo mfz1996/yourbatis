@@ -3,6 +3,7 @@ package com.mt.mybatis.resulthandler;
 import com.mt.mybatis.config.Configuration;
 import com.mt.mybatis.datasource.MyDataSource;
 import com.mt.mybatis.exception.UnmatchParameterException;
+import com.mt.mybatis.executor.Executor;
 import com.mt.mybatis.mapper.MyMappedStatement;
 
 import java.sql.*;
@@ -17,11 +18,13 @@ public class MyStatementHandler {
     private MyMappedStatement ms;
     private Object[] parameters;
     private Configuration configuration;
+    private Executor executor;
 
-    public MyStatementHandler(MyMappedStatement ms, Object parameters,Configuration configuration) {
+    public MyStatementHandler(MyMappedStatement ms, Object parameters,Configuration configuration,Executor executor) {
         this.ms=ms;
         this.parameters = (Object[]) parameters;
         this.configuration = configuration;
+        this.executor = executor;
     }
     // 获取sql→设置参数→返回Statement
     public PreparedStatement handle() throws UnmatchParameterException {
@@ -69,8 +72,7 @@ public class MyStatementHandler {
     }
 
     private Connection getConnection() throws SQLException, ClassNotFoundException {
-        MyDataSource dataSource = configuration.getDataSource();
-        return dataSource.getConnection();
+        return executor.getConnection();
     }
 
 }
