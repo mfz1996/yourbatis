@@ -3,11 +3,25 @@ package com.mt.mybatis.example;
 import com.mt.mybatis.config.Configuration;
 import com.mt.mybatis.example.Domain.Person;
 import com.mt.mybatis.example.Mapper.PersonDao;
+import com.mt.mybatis.example.Mapper.UserDao;
 import com.mt.mybatis.session.SqlSession;
 import com.mt.mybatis.session.SqlSessionFactory;
 import com.mt.mybatis.builder.SqlSessionFactoryBuilder;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -15,38 +29,34 @@ public class Main {
         SqlSessionFactory sqlSessionFactory = SqlSessionFactoryBuilder.build(configuration);
         SqlSession sqlSession = sqlSessionFactory.openSession();
         PersonDao personDao = sqlSession.getMapper(PersonDao.class);
-        System.out.println(personDao.getAll());
-        Person person = personDao.queryPersonById(1);
-        System.out.println(person == null);
-        Person person2 = personDao.queryPersonById(1);
-        System.out.println(person2.toString());
-//        Integer sex = personDao.getSexById(11);
-//        System.out.println(sex);
-//        Integer sex2 = personDao.getSexById(11);
-//        System.out.println(sex2);
-//        String name = personDao.getNameById(11);
-//        System.out.println(name);
-//        String name2 = personDao.getNameById(11);
-//        System.out.println(name2);
-//        List<Person> persons = personDao.getAll();
-//        for (Person p:persons){
-//            System.out.println(p);
-//        }
-//        while(true){
-//            Thread.currentThread().sleep(1);
+        UserDao userDao = sqlSession.getMapper(UserDao.class);
+        System.out.println(personDao.queryPersonById(11));
+        System.out.println(userDao.getPersonById(11));
+        System.out.println(userDao.getPersonById(11));
+        System.out.println(userDao.getUserById(1));
+        personDao.addPerson("155",1,12);
+        System.out.println(userDao.getPersonById(11));
+        System.out.println(userDao.getUserById(1));
+        // 测试数据库连接池
+//        while (true) {
 //            Thread t = new Thread(new Runnable() {
 //                @Override
 //                public void run() {
-//                    System.out.println(personDao.getAll());
+//                    SqlSession sqlSession = sqlSessionFactory.openSession();
+//                    PersonDao personDao = sqlSession.getMapper(PersonDao.class);
+//                    System.out.println(Thread.currentThread() + ":" + personDao.getAll());
+//                    try {
+//                        sqlSession.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
 //                }
 //            });
 //            t.start();
+//            Thread.sleep(1);
 //        }
-
-        personDao.editPersonById("MMMM", 1);
-        personDao.addPerson(22, "wewe", 2, 22);
-        personDao.deletePersonById(1);
-        sqlSession.close();
     }
 }
+
+
 

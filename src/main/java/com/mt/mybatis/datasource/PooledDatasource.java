@@ -59,6 +59,7 @@ public class PooledDatasource extends MyDataSource {
                     }
                 }
                 if (conn != null){
+//                    System.out.println(Thread.currentThread()+"获取连接\t"+"连接池数量："+state.activeConnections.size()+"\t空闲池数量："+state.idleConnections.size());
                     conn.setLastUsedTimestamp(System.currentTimeMillis());
                     conn.setInvalidTimestamp(System.currentTimeMillis()+poolMaximumCheckoutTime);
                     state.activeConnections.add(conn);
@@ -84,6 +85,7 @@ public class PooledDatasource extends MyDataSource {
                 conn.getRealConnection().close();
                 conn = null;
             }
+//            System.out.println(Thread.currentThread()+"断开连接\t"+"连接池数量："+state.activeConnections.size()+"\t空闲池数量："+state.idleConnections.size());
         }
     }
 

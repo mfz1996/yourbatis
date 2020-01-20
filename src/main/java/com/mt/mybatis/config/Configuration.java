@@ -1,5 +1,6 @@
 package com.mt.mybatis.config;
 
+import com.mt.mybatis.annotation.*;
 import com.mt.mybatis.cache.DefaultCache;
 import com.mt.mybatis.cache.LruCache;
 import com.mt.mybatis.datasource.MyDataSource;
@@ -18,10 +19,8 @@ import org.apache.ibatis.cache.Cache;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class Configuration {
@@ -39,7 +38,7 @@ public class Configuration {
     public Map<String, MyMappedStatement> getMappedStatementMap() {
         return mappedStatementMap;
     }
-
+    private Set<Class<? extends Annotation>> sqlAnnotationTypes = new HashSet<Class<? extends Annotation>>();
 
     public Configuration() {
         try {
@@ -63,6 +62,7 @@ public class Configuration {
         if (configLocation == null){
             throw new RuntimeException("Configuration Location should not be null");
         }try {
+            initSqlAnnotationTypes();
             InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configLocation);
             this.properties.load(inputStream);
             InputStream mapperStream = this.getClass().getClassLoader().getResourceAsStream(properties.getProperty("mapperLocation","mybatis-mapper.properties"));
@@ -90,32 +90,41 @@ public class Configuration {
                     default:
                         cache = new DefaultCache(cacheName);
                 }
+                secondCaches.putIfAbsent(cls.getName(),cache);
                 for (Method method:methods){
                     String mapperKey = cls.getName()+ "." + method.getName();
                     if (mapperProperties.getProperty(mapperKey) != null){
                         String[] mapperComp = mapperProperties.getProperty(mapperKey).split("#");
                         if (mapperComp.length == 1){
-                            String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
-                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
-                            mappedStatementMap.put(mapperKey,ms);
-                            Type type = method.getGenericReturnType();
-                            if (type instanceof ParameterizedType){
-                                Type[] typesto = ((ParameterizedType) type).getActualTypeArguments();
-                                resultHandlerRegistry.regist(mapperKey, (Class<?>) typesto[0]);
-                            }
-                            returnTypeMapping.put(mapperKey,method.getReturnType());
+                            // 重构：提取重复的注册过程，register函数与下面多行代码存在其一
+                            registerMappedStatement(method,mapperComp[0],null);
+//                            String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
+//                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
+//                            mappedStatementMap.put(mapperKey,ms);
+//                            Type type = method.getGenericReturnType();
+//                            if (type instanceof ParameterizedType){
+//                                Type[] typesto = ((ParameterizedType) type).getActualTypeArguments();
+//                                resultHandlerRegistry.regist(mapperKey, (Class<?>) typesto[0]);
+//                            }
+//                            returnTypeMapping.put(mapperKey,method.getReturnType());
                         }else {
-                            String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
-                            String resultType = mapperProperties.getProperty(mapperKey).split("#")[1];
-                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
-                            mappedStatementMap.put(mapperKey,ms);
-                            resultHandlerRegistry.regist(mapperKey,Class.forName(resultType));
-                            returnTypeMapping.put(mapperKey, (Class<?>) method.getGenericReturnType());
+                            registerMappedStatement(method,mapperComp[0],Class.forName(mapperComp[1]));
+//                            String sql = mapperProperties.getProperty(mapperKey).split("#")[0];
+//                            String resultType = mapperProperties.getProperty(mapperKey).split("#")[1];
+//                            MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,cache);
+//                            mappedStatementMap.put(mapperKey,ms);
+//                            resultHandlerRegistry.regist(mapperKey,Class.forName(resultType));
+//                            returnTypeMapping.put(mapperKey, (Class<?>) method.getGenericReturnType());
                         }
                     }
                 }
+                // 加入注解配置
+                Annotation[] annotations = cls.getDeclaredAnnotations();
+                if (hasMapperAnnotation(cls)){
+                    parseAnnotationMethods(cls);
+                }
             }
-        } catch (IOException e) {
+        } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
     }
@@ -150,7 +159,7 @@ public class Configuration {
         return new MyStatementHandler(ms, parameter,this,executor);
     }
     public Boolean isCache() {
-        return firstCache;
+        return secondCache;
     }
 
     public MyResultHandlerRegistry getResultHandlerRegistry() {
@@ -163,6 +172,51 @@ public class Configuration {
 
     public Map<String, Class<?>> getReturnTypeMapping() {
         return returnTypeMapping;
+    }
+
+    private void initSqlAnnotationTypes(){
+        this.sqlAnnotationTypes.add(Select.class);
+        this.sqlAnnotationTypes.add(Insert.class);
+        this.sqlAnnotationTypes.add(Update.class);
+        this.sqlAnnotationTypes.add(Delete.class);
+    }
+
+    private Boolean hasMapperAnnotation(Class<?> clazz){
+        Annotation[] annotations = clazz.getDeclaredAnnotations();
+        for (Annotation annotation:annotations){
+            if (annotation instanceof Mapper) return true;
+        }
+        return false;
+    }
+
+    private void parseAnnotationMethods(Class<?> clazz) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method[] methods = clazz.getDeclaredMethods();
+        for (Method method:methods){
+            for (Class<? extends Annotation> annotation:sqlAnnotationTypes){
+                Annotation sqlAnnotation = method.getAnnotation(annotation);
+                if (sqlAnnotation!=null){
+                    final String sqlString = (String) sqlAnnotation.getClass().getMethod("value").invoke(sqlAnnotation);
+                    registerMappedStatement(method,sqlString,null);
+                }
+            }
+        }
+    }
+
+    private void registerMappedStatement(Method method,String sql,Class<?> clazz){
+        String mapperKey = method.getDeclaringClass().getName()+ "." + method.getName();
+        MyMappedStatement ms = new MyMappedStatement(this,mapperKey,sql,secondCaches.get(method.getDeclaringClass().getName()));
+        mappedStatementMap.put(mapperKey,ms);
+        Type type;
+        if (clazz == null){
+            type = method.getGenericReturnType();
+            if (type instanceof ParameterizedType){
+                Type[] typesto = ((ParameterizedType) type).getActualTypeArguments();
+                resultHandlerRegistry.regist(mapperKey, (Class<?>) typesto[0]);
+            }
+        }else {
+            resultHandlerRegistry.regist(mapperKey, clazz);
+        }
+        returnTypeMapping.put(mapperKey,method.getReturnType());
     }
 
 }
