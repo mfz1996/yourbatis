@@ -1,6 +1,16 @@
+import com.mfz.yourbatis.example.Mapper.AMapper;
 import org.apache.ibatis.executor.resultset.ResultSetHandler;
+import org.apache.ibatis.mapping.ParameterMapping;
+
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.HashMap;
+
 public class Test {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchMethodException {
 //        Object obj = new Object();
 //        ReferenceQueue<Object> refQueue = new ReferenceQueue<Object>();
 //        WeakReference<Object> weakRef = new WeakReference<Object>(obj, refQueue);
@@ -19,5 +29,11 @@ public class Test {
 //
 //        Thread.sleep(200);
 //        System.out.println(refQueue.poll());
+        Method m = AMapper.class.getMethod("incr", int.class);
+        Parameter[] parameters = m.getParameters();
+        for (Parameter p : parameters){
+            p.getName();
+
+        }
     }
 }

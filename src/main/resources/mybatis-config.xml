@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <datasource>
+        <type>Pooled</type>
+        <jdbc.driver>com.mysql.cj.jdbc.Driver</jdbc.driver>
+        <jdbc.url>jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC</jdbc.url>
+        <jdbc.username>root</jdbc.username>
+        <jdbc.password>123456</jdbc.password>
+    </datasource>
+    <properties>
+        <cache>DEFAULT</cache>
+        <cacheFirst>true</cacheFirst>
+        <cacheSecond>true</cacheSecond>
+    </properties>
+
+    <mappers>
+        <mapper>AMapper.xml</mapper>
+        <mapper>PersonDao.xml</mapper>
+        <mapper>UserDao.xml</mapper>
+    </mappers>
+
+</configuration>

@@ -1,6 +1,7 @@
 package com.mfz.yourbatis.example;
 
 import com.mfz.yourbatis.config.Configuration;
+import com.mfz.yourbatis.example.Mapper.AMapper;
 import com.mfz.yourbatis.example.Mapper.PersonDao;
 import com.mfz.yourbatis.example.Mapper.UserDao;
 import com.mfz.yourbatis.session.SqlSession;
@@ -13,16 +14,25 @@ public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
         Configuration configuration = new Configuration("mybatis-config.properties");
         SqlSessionFactory sqlSessionFactory = SqlSessionFactoryBuilder.build(configuration);
-        SqlSession sqlSession = sqlSessionFactory.openSession();
-        PersonDao personDao = sqlSession.getMapper(PersonDao.class);
-        UserDao userDao = sqlSession.getMapper(UserDao.class);
-        System.out.println(personDao.queryPersonById(11));
-        System.out.println(userDao.getPersonById(11));
-        System.out.println(userDao.getPersonById(11));
-        System.out.println(userDao.getUserById(1));
-        personDao.addPerson("155",1,12);
-        System.out.println(userDao.getPersonById(11));
-        System.out.println(userDao.getUserById(1));
+//        SqlSession sqlSession = sqlSessionFactory.openSession();
+//        AMapper mapper = sqlSession.getMapper(AMapper.class);
+        for (int i=0;i<100;i++){
+            SqlSession sqlSession = sqlSessionFactory.openSession();
+            AMapper mapper = sqlSession.getMapper(AMapper.class);
+            Thread thread = new Thread(() -> mapper.incr(1));
+            thread.start();
+        }
+
+
+//        PersonDao personDao = sqlSession.getMapper(PersonDao.class);
+//        UserDao userDao = sqlSession.getMapper(UserDao.class);
+//        System.out.println(personDao.queryPersonById(11));
+//        System.out.println(userDao.getPersonById(11));
+//        System.out.println(userDao.getPersonById(11));
+//        System.out.println(userDao.getUserById(1));
+//        personDao.addPerson("155",1,12);
+//        System.out.println(userDao.getPersonById(11));
+//        System.out.println(userDao.getUserById(1));
         // 测试数据库连接池
 //        while (true) {
 //            Thread t = new Thread(new Runnable() {

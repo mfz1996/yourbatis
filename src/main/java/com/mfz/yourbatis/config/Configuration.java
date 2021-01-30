@@ -3,6 +3,7 @@ package com.mfz.yourbatis.config;
 import com.mfz.yourbatis.annotation.*;
 import com.mfz.yourbatis.cache.DefaultCache;
 import com.mfz.yourbatis.cache.LruCache;
+import com.mfz.yourbatis.cache.RedisConfig;
 import com.mfz.yourbatis.executor.CacheExecutor;
 import com.mfz.yourbatis.executor.Executor;
 import com.mfz.yourbatis.executor.SimpleExecutor;
@@ -10,7 +11,6 @@ import com.mfz.yourbatis.mapper.MyMappedStatement;
 import com.mfz.yourbatis.resulthandler.MyResultHandlerRegistry;
 import com.mfz.yourbatis.resulthandler.MyStatementHandler;
 import com.mfz.yourbatis.typehandler.MyTypeHandlerRegistry;
-import com.mt.mybatis.annotation.*;
 import com.mfz.yourbatis.datasource.MyDataSource;
 import com.mfz.yourbatis.datasource.PooledDatasource;
 import com.mfz.yourbatis.datasource.UnpooledDatasource;
@@ -36,6 +36,7 @@ public class Configuration {
     private Map<String, MyMappedStatement> mappedStatementMap = new HashMap<String, MyMappedStatement>();
     private Map<String,Class<?>> returnTypeMapping = new HashMap<>();
     private Map<String,Cache> secondCaches = new HashMap<>();
+
     public Map<String, MyMappedStatement> getMappedStatementMap() {
         return mappedStatementMap;
     }
@@ -76,6 +77,8 @@ public class Configuration {
             }
             this.firstCache = properties.getProperty("firstCache","true").equals("true");
             this.secondCache = properties.getProperty("secondCache","true").equals("true");
+            // 20200330
+
             String cacheType = properties.getProperty("cacheType","DEFAULT");
             String packageName = properties.getProperty("mapperScan");
             List<Class<?>> classes = ClassUtil.getClasses(packageName);
@@ -220,4 +223,11 @@ public class Configuration {
         returnTypeMapping.put(mapperKey,method.getReturnType());
     }
 
+    public void setFirstCache(Boolean firstCache) {
+        this.firstCache = firstCache;
+    }
+
+    public void setSecondCache(Boolean secondCache) {
+        this.secondCache = secondCache;
+    }
 }
