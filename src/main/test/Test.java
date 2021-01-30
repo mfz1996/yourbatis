@@ -19,5 +19,6 @@ public class Test {
 //
 //        Thread.sleep(200);
 //        System.out.println(refQueue.poll());
+        System.out.println("test4");
     }
 }
