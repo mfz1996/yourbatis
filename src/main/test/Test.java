@@ -32,7 +32,7 @@ public class Test {
         Method m = AMapper.class.getMethod("incr", int.class);
         Parameter[] parameters = m.getParameters();
         for (Parameter p : parameters){
-            p.getName();
+            System.out.println("test222222");
 
         }
     }
